@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monitor Pro AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #070512 0%, #0d0a22 50%, #030206 100%);
+            color: #f1f5f9; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; padding: 12px; margin: 0; min-height: 100vh; box-sizing: border-box;
+        }
+        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: radial-gradient(circle, #130c2b 0%, #020104 100%); text-align: center; padding: 20px; }
+        .login-btn { background: white; color: black; border: none; padding: 14px 32px; border-radius: 30px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 1rem; box-shadow: 0 4px 25px rgba(255,255,255,0.15); }
+        .app-container { display: none; max-width: 1200px; margin: 0 auto; }
+        header { display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #1e193c; padding-bottom: 15px; margin-bottom: 15px; }
+        @media(min-width: 768px) { header { flex-direction: row; justify-content: space-between; align-items: center; } }
+        .gradient-title { background: linear-gradient(90deg, #ca8a04, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem; margin: 0; font-weight: 900; }
+        .controls { display: flex; gap: 8px; align-items: center; width: 100%; justify-content: space-between; }
+        @media(min-width: 768px) { .controls { width: auto; justify-content: flex-end; } }
+        select, input, .btn { background: #141030; color: white; border: 1px solid #3b3378; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; box-sizing: border-box; }
+        input { cursor: text; width: 100%; }
+        .btn-toggle { background: linear-gradient(90deg, #6d28d9, #4f46e5); border: none; font-weight: bold; }
+        .btn-action { background: #10b981; border: none; font-weight: bold; }
+        .btn-delete { background: #ef4444; border: none; font-weight: bold; padding: 10px 14px; }
+        .ai-summary-box { background: linear-gradient(135deg, rgba(109,40,217,0.12) 0%, rgba(30,27,75,0.4) 100%); border: 1px solid #581c87; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .ai-header-layout { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .ai-badge { background: #6d28d9; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .ai-expanded-content { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media(min-width: 768px) { .ai-expanded-content { grid-template-columns: 3fr 1fr; align-items: center; } }
+        .pie-container { position: relative; width: 120px; height: 120px; margin: 0 auto; }
+        .grid-percentages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        @media(min-width: 768px) { .grid-percentages { grid-template-columns: repeat(6, 1fr); gap: 14px; } }
+        .card-perf { background: rgba(20, 16, 48, 0.55); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 10px; padding: 10px; text-align: center; }
+        .card-perf h3 { margin: 0; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+        .card-perf .value { font-size: 1.3rem; font-weight: 800; color: #38bdf8; margin-top: 4px; }
+        .hardware-banner { background: #0a071a; border-left: 4px solid #c084fc; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px; }
+        @media(min-width: 768px) { .hardware-banner { flex-direction: row; gap: 30px; } }
+        .chart-card { background: rgba(12, 9, 31, 0.6); border: 1px solid rgba(59, 130, 246, 0.1); border-radius: 12px; padding: 10px; margin-bottom: 15px; position: relative; height: 240px; width: 100%; box-sizing: border-box; }
+        @media(min-width: 768px) { .chart-card { height: 320px; padding: 15px; } }
+        .history-panel { background: rgba(20, 16, 48, 0.4); border: 1px solid #1e1b4b; border-radius: 12px; padding: 12px; margin-bottom: 15px; }
+        .history-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        @media(min-width: 600px) { .history-grid { grid-template-columns: repeat(4, 1fr); } }
+        .history-day { background: #0c091f; border: 1px solid #2e2a5e; padding: 10px; border-radius: 8px; }
+        .history-day-title { font-size: 0.8rem; color: #a78bfa; margin-bottom: 6px; font-weight: bold; border-bottom: 1px solid #2e2a5e; padding-bottom: 4px;}
+        .history-stat { font-size: 0.75rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .chat-container { background: #0a071c; border: 1px solid #1e193c; border-radius: 12px; padding: 12px; }
+        .chat-box { height: 140px; overflow-y: auto; border-bottom: 1px solid #1e193c; padding-bottom: 8px; margin-bottom: 10px; }
+        .msg { margin: 6px 0; padding: 8px 12px; border-radius: 8px; max-width: 85%; font-size: 0.85rem; line-height: 1.4; }
+        .user { background: rgba(59, 130, 246, 0.15); margin-left: auto; text-align: right; }
+        .ai { background: rgba(192, 132, 252, 0.15); }
+    </style>
+</head>
+<body>
+
+    <div class="login-screen" id="login-section">
+        <h1 style="background: linear-gradient(90deg, #ca8a04, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.5rem; margin: 0 0 10px 0; font-weight: 900;">Monitor Pro AI</h1>
+        <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">Distributed Machine Logging Engine • Port 25565</p>
+        <button class="login-btn" onclick="login()">Accedi al programma</button>
+    </div>
+
+    <div class="app-container" id="app-section">
+        <header>
+            <div>
+                <h1 class="gradient-title">Monitor Pro AI</h1>
+                <div style="font-size:0.75rem; color:#a78bfa; margin-top:2px;">Stato: Centralizzato su Database Condiviso</div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-toggle" onclick="toggleViewMode()" id="view-btn">Smanettone</button>
+                <select id="device-selector" onchange="onDeviceSwitch()"></select>
+                <button class="btn btn-delete" onclick="removeSelectedDevice()" id="delete-device-btn">Elimina</button>
+            </div>
+        </header>
+                <div class="configuration-banner" style="background: #0a071a; border-left: 4px solid #c084fc; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 0.8rem;">
+            <div class="configuration-banner-content" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    
+                    <span class="ai-badge" id="configuration-instructions">Come configurare un dispositivo:</span>
+                    <p style="margin: 4px 0 0 0; color: #cbd5e1; font-size: 0.75rem; line-height: 1.4;">1. Scarica il programma client dal repository ufficiale.<br>
+                    2. assicurati prima di aprire il programma di installare le librerie necessarie. subito dopo apri il programma ed esegui i passaggi di configurazione iniziale, inserendo l'indirizzo IP del server centrale locale a casa tua.<br>
+                    3. Esegui il client sul dispositivo remoto.<br>
+                    4. Assicurati che il dispositivo sia connesso alla rete e possa comunicare con il server centrale locale a casa tua.<br>
+                    5. Il dispositivo invierà automaticamente i dati al server e apparirà nel menu a tendina dei dispositivi disponibili.</p>   
+                </div>
+            </div>
+        </div>
+
+
+        <div class="ai-summary-box">
+            <div class="ai-header-layout">
+                <div>
+                    <span style="font-weight: bold; color: #c084fc; margin-right: 6px; font-size: 0.9rem;">⚡ Stato Carico Orario:</span>
+                    <span class="ai-badge" id="ai-status-tag">Analisi...</span>
+                </div>
+                <button class="btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="fetchHourlyAssessment()">Aggiorna</button>
+            </div>
+            <div class="ai-expanded-content">
+                <div id="ai-hourly-text" style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">Elaborazione vettori...</div>
+                <div class="pie-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-percentages">
+            <div class="card-perf"><h3>CPU</h3><div id="cpu-val" class="value">--%</div></div>
+            <div class="card-perf"><h3>GPU</h3><div id="gpu-val" class="value" style="color: #22c55e;">--%</div></div>
+            <div class="card-perf"><h3>Clock</h3><div id="freq-val" class="value" style="color: #ca8a04;">-- GHz</div></div>
+            <div class="card-perf"><h3>Temp</h3><div id="temp-val" class="value" style="color: #ef4444;">--°C</div></div>
+            <div class="card-perf"><h3>RAM</h3><div id="ram-val" class="value">--%</div></div>
+            <div class="card-perf"><h3>Disco</h3><div id="disk-val" class="value">--%</div></div>
+        </div>
+
+        <div class="hardware-banner">
+            <div><strong>OS:</strong> <span id="hw-os">--</span></div>
+            <div><strong>CPU:</strong> <span id="hw-cpu">--</span></div>
+            <div><strong>GPU:</strong> <span id="hw-gpu">--</span></div>
+        </div>
+
+        <div class="expert-section" id="charts-wrapper">
+            <div class="chart-card">
+                <canvas id="liveChart"></canvas>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <h4 style="margin: 0 0 8px 0; color: #38bdf8; font-size: 0.85rem; text-transform: uppercase;">📊 Storico Giornaliero Analitico</h4>
+            <div class="history-grid">
+                <div class="history-day">
+                    <div class="history-day-title">Ieri</div>
+                    <div class="history-stat"><span>CPU:</span> <span style="color:#10b981;">18%</span></div>
+                    <div class="history-stat"><span>GPU:</span> <span style="color:#10b981;">12%</span></div>
+                    <div class="history-stat"><span>Temp:</span> <span style="color:#f59e0b;">62°C</span></div>
+                </div>
+                <div class="history-day">
+                    <div class="history-day-title">-2 Giorni</div>
+                    <div class="history-stat"><span>CPU:</span> <span style="color:#f59e0b;">45%</span></div>
+                    <div class="history-stat"><span>GPU:</span> <span style="color:#ef4444;">88%</span></div>
+                    <div class="history-stat"><span>Temp:</span> <span style="color:#ef4444;">78°C</span></div>
+                </div>
+                <div class="history-day">
+                    <div class="history-day-title">-3 Giorni</div>
+                    <div class="history-stat"><span>CPU:</span> <span style="color:#ef4444;">82%</span></div>
+                    <div class="history-stat"><span>GPU:</span> <span style="color:#f59e0b;">60%</span></div>
+                    <div class="history-stat"><span>Temp:</span> <span style="color:#ef4444;">81°C</span></div>
+                </div>
+                <div class="history-day">
+                    <div class="history-day-title">-4 Giorni</div>
+                    <div class="history-stat"><span>CPU:</span> <span style="color:#10b981;">10%</span></div>
+                    <div class="history-stat"><span>GPU:</span> <span style="color:#10b981;">5%</span></div>
+                    <div class="history-stat"><span>Temp:</span> <span style="color:#10b981;">45°C</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <h3 style="margin: 0 0 8px 0; color: #c084fc; font-size:0.9rem;">💬 Terminale AI</h3>
+            <div class="chat-box" id="chat-box"></div>
+            <div class="input-area">
+                <input type="text" id="chat-input" placeholder="Invia diagnostica...">
+                <button class="btn btn-toggle" onclick="sendChat()">Invia</button>
+            </div>
+        </div>
+        <div class="information-box" style="margin-top: 20px; font-size: 0.75rem; color: #94a3b8;">
+            <h3 style="margin: 0 0 8px 0; color: #c084fc; font-size:0.9rem;">ℹ️ Informazioni</h3>
+            <p>Questo programma raccoglie dati di sistema da dispositivi remoti e li visualizza in tempo reale. I dati vengono inviati a un database centralizzato per l'analisi e la diagnostica. Assicurati che i dispositivi siano configurati correttamente per inviare i dati al server.</p>
+            <p> Attenzione: i dati inviati a volte non potrebberò essere non validi per esempio se il programma non riesce a rilevare la temperatura del dispositivo di origine mette la temperatura a 45 gradi che non è una analisi accurata.</p>
+
+        </div>
+    </div>
+
+    <script>
+        let timelineChart = null;
+        let diagnosticPieChart = null;
+        let isExpertMode = true;
+
+        function login() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            initCharts();
+            syncDevicesFromServer();
+            setInterval(fetchDeviceData, 3000);
+            setInterval(fetchHourlyAssessment, 15000);
+            setInterval(syncDevicesFromServer, 5000);
+        }
+
+        async function syncDevicesFromServer() {
+            try {
+                let res = await fetch('/api/devices');
+                let data = await res.json();
+                const selector = document.getElementById('device-selector');
+                const currentSelected = selector.value;
+                selector.innerHTML = "";
+                data.devices.forEach(d => {
+                    let opt = document.createElement('option');
+                    opt.value = d;
+                    opt.innerText = d === "PC-Principale" ? "💻 PC Locale (Host)" : `⚙️ ${d}`;
+                    selector.appendChild(opt);
+                });
+                if (data.devices.includes(currentSelected)) {
+                    selector.value = currentSelected;
+                } else {
+                    selector.value = data.devices[0] || "PC-Principale";
+                }
+                updateDeleteButtonVisibility();
+            } catch(e) { console.error(e); }
+        }
+
+        async function removeSelectedDevice() {
+            const dev = document.getElementById('device-selector').value;
+            if (dev === "PC-Principale") return;
+            if(!confirm(`Rimuovere il dispositivo "${dev}"?`)) return;
+            try {
+                let res = await fetch(`/api/devices/remove/${dev}`, { method: 'DELETE' });
+                if(res.ok) { await syncDevicesFromServer(); onDeviceSwitch(); }
+            } catch(e) { console.error(e); }
+        }
+
+        function updateDeleteButtonVisibility() {
+            const dev = document.getElementById('device-selector').value;
+            document.getElementById('delete-device-btn').style.display = dev === "PC-Principale" ? "none" : "inline-block";
+        }
+
+        function toggleViewMode() {
+            isExpertMode = !isExpertMode;
+            document.getElementById('view-btn').innerText = isExpertMode ? "Smanettone" : "Base";
+            document.getElementById('charts-wrapper').style.display = isExpertMode ? "block" : "none";
+        }
+
+        function initCharts() {
+            const ctxLine = document.getElementById('liveChart').getContext('2d');
+            timelineChart = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'CPU', data: [], borderColor: '#ef4444', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 },
+                        { label: 'GPU', data: [], borderColor: '#22c55e', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 },
+                        { label: 'RAM', data: [], borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 },
+                        { label: 'Temp', data: [], borderColor: '#ca8a04', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, borderDash: [4, 4] }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.01)' }, ticks: { font: { size: 9 }, color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 8 }, color: '#94a3b8', maxRotation: 0 } }
+                    },
+                    plugins: { legend: { position: 'top', labels: { color: 'white', font: { size: 10 }, boxWidth: 10 } } }
+                }
+            });
+
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            diagnosticPieChart = new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: ['Riposo', 'Medio', 'Stress'],
+                    datasets: [{ data: [100, 0, 0], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        async function fetchDeviceData() {
+            const dev = document.getElementById('device-selector').value;
+            if(!dev) return;
+            try {
+                let res = await fetch(`/api/metrics/${dev}`);
+                let data = await res.json();
+                document.getElementById('cpu-val').innerText = Math.round(data.latest.cpu) + '%';
+                document.getElementById('gpu-val').innerText = Math.round(data.latest.gpu) + '%';
+                document.getElementById('freq-val').innerText = data.latest.freq.toFixed(2) + ' GHz';
+                document.getElementById('temp-val').innerText = Math.round(data.latest.temp) + '°C';
+                document.getElementById('ram-val').innerText = Math.round(data.latest.ram) + '%';
+                document.getElementById('disk-val').innerText = Math.round(data.latest.disk) + '%';
+                document.getElementById('hw-os').innerText = data.hardware.os;
+                document.getElementById('hw-cpu').innerText = data.hardware.cpu_model;
+                document.getElementById('hw-gpu').innerText = data.hardware.gpu_model;
+                if (isExpertMode && timelineChart) {
+                    timelineChart.data.labels = data.labels;
+                    timelineChart.data.datasets[0].data = data.cpu;
+                    timelineChart.data.datasets[1].data = data.gpu;
+                    timelineChart.data.datasets[2].data = data.ram;
+                    timelineChart.data.datasets[3].data = data.temp;
+                    timelineChart.update();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchHourlyAssessment() {
+            const dev = document.getElementById('device-selector').value;
+            if(!dev) return;
+            try {
+                let res = await fetch(`/api/assessment/${dev}`);
+                let data = await res.json();
+                document.getElementById('ai-status-tag').innerText = data.status;
+                document.getElementById('ai-hourly-text').innerText = data.summary;
+                const tag = document.getElementById('ai-status-tag');
+                tag.style.background = data.status.includes("Critico") ? "#ef4444" : (data.status.includes("Moderato") ? "#d97706" : "#059669");
+                if(diagnosticPieChart) { diagnosticPieChart.data.datasets[0].data = data.distribution; diagnosticPieChart.update(); }
+            } catch (e) { console.error(e); }
+        }
+
+        function onDeviceSwitch() { fetchDeviceData(); fetchHourlyAssessment(); updateDeleteButtonVisibility(); }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+            const box = document.getElementById('chat-box');
+            const dev = document.getElementById('device-selector').value;
+            box.innerHTML += `<div class="msg user"><b>Tu:</b> ${text}</div>`;
+            input.value = ''; box.scrollTop = box.scrollHeight;
+            try {
+                let res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: text, device_id: dev }) });
+                let data = await res.json();
+                box.innerHTML += `<div class="msg ai"><b>AI:</b> ${data.response}</div>`;
+            } catch(e) { box.innerHTML += `<div class="msg ai" style="color:red;"><b>Errore.</b></div>`; }
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html>
