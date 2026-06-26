@@ -46,6 +46,8 @@
         .history-stat { font-size: 0.75rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 2px; }
         .chat-container { background: #0a071c; border: 1px solid #1e193c; border-radius: 12px; padding: 12px; }
         .chat-box { height: 140px; overflow-y: auto; border-bottom: 1px solid #1e193c; padding-bottom: 8px; margin-bottom: 10px; }
+        .input-area { display: flex; gap: 8px; align-items: center; }
+        .input-area input { flex: 1; }
         .msg { margin: 6px 0; padding: 8px 12px; border-radius: 8px; max-width: 85%; font-size: 0.85rem; line-height: 1.4; }
         .user { background: rgba(59, 130, 246, 0.15); margin-left: auto; text-align: right; }
         .ai { background: rgba(192, 132, 252, 0.15); }
@@ -158,6 +160,7 @@
             <div class="chat-box" id="chat-box"></div>
             <div class="input-area">
                 <input type="text" id="chat-input" placeholder="Invia diagnostica...">
+                
                 <button class="btn btn-toggle" onclick="sendChat()">Invia</button>
             </div>
         </div>
@@ -237,7 +240,10 @@
                         { label: 'CPU', data: [], borderColor: '#ef4444', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 },
                         { label: 'GPU', data: [], borderColor: '#22c55e', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 },
                         { label: 'RAM', data: [], borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 },
-                        { label: 'Temp', data: [], borderColor: '#ca8a04', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, borderDash: [4, 4] }
+                        { label: 'Temp', data: [], borderColor: '#ca8a04', backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, borderDash: [4, 4] },
+                        { label: 'Clock', data: [], borderColor: '#8b5cf6', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 },
+                        { label: 'Disk', data: [], borderColor: '#57534e', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0 }
+
                     ]
                 },
                 options: {
@@ -283,6 +289,8 @@
                     timelineChart.data.datasets[1].data = data.gpu;
                     timelineChart.data.datasets[2].data = data.ram;
                     timelineChart.data.datasets[3].data = data.temp;
+                    timelineChart.data.datasets[4].data = data.freq;
+                    timelineChart.data.datasets[5].data = data.disk;
                     timelineChart.update();
                 }
             } catch (e) { console.error(e); }

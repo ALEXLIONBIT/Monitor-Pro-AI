@@ -191,7 +191,7 @@ def chat_with_ai():
         cursor.execute("SELECT timestamp, cpu, gpu, ram, temp FROM metrics WHERE device_id = ? ORDER BY id DESC LIMIT 10", (device_id,))
         logs = cursor.fetchall()
     context_str = "\n".join([f"[{l[0]}] CPU: {round(l[1])}%, GPU: {round(l[2])}%, RAM: {round(l[3])}%, TEMP: {l[4]}°C" for l in logs])
-    prompt = f"Sei un ottimizzatore hardware. Analizzi i log reali di '{device_id}':\n{context_str}\n\nRispondi in modo tecnico: {user_message}"
+    prompt = f"(se devi scrivere in grassetto non usare li ** ma il tag html visto che verrà visualizzato in un sito web) Sei un ottimizzatore hardware. Analizzi i log reali di '{device_id}':\n{context_str}\n\nRispondi in modo breve o tecnico in base alla richiesta: {user_message}"
     try:
         response = requests.post("http://localhost:11434/api/generate", json={"model": modello, "prompt": prompt, "stream": False}, timeout=60)
         ai_response = response.json().get('response', 'Errore.')

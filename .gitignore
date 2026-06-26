@@ -1,0 +1,4 @@
+system_log.db
+venv*/
+__pycache__/
+*.pyc
